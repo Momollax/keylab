@@ -12,7 +12,7 @@ from api_endpoint.get_project import get_project
 from api_endpoint.get_user_info import get_user_info
 from api_endpoint.get_ip_whitelist import get_ip_whitelist
 from api_endpoint.upload_file import upload_file_to_repo
-
+from utils.unzip import unzip_file
 load_dotenv()
 
 api_token = os.getenv("API_TOKEN")
@@ -23,8 +23,8 @@ def main(args):
     if args.get_user_info:
         get_user_info(api_token, gitlab_url)
 
-    project_ids = list_project_id(api_token, gitlab_url)
-    
+    project_ids, repo_name = list_project_id(api_token, gitlab_url)
+    i = 0
     for project in project_ids:
         if args.get_project_info:
             get_project(api_token, gitlab_url, project)
@@ -40,7 +40,7 @@ def main(args):
             get_repo_branches(api_token, gitlab_url, project)
         
         if args.download:
-            download_project_http(api_token, gitlab_url, project)
+            download_project_http(api_token, gitlab_url, project, repo_name[i])
         
         if args.enum_members:
             enum_members(api_token, gitlab_url, project)
@@ -52,10 +52,16 @@ def main(args):
             get_scope_list(api_token, gitlab_url, project)
         
         if args.upload:
-            if args.file_path and args.branch and args.commit_message:
-                upload_file_to_repo(api_token, gitlab_url, project, file_path=args.file_path, branch=args.branch, commit_message=args.commit_message)
+            if args.file_path:
+                
+                upload_file_to_repo(api_token, gitlab_url, project, file_path=args.file_path)
             else:
                 print("Error: For uploading, you must specify --file_path, --branch, and --commit_message.")
+        if args.pwn:
+            download_project_http(api_token, gitlab_url, project, repo_name[i])
+            unzip_file(repo_name[i], "pwn")
+        i = i + 1
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Script for interacting with GitLab API")
@@ -71,8 +77,6 @@ if __name__ == "__main__":
     parser.add_argument("--get_scope", action="store_true", help="Get project scope list")
     parser.add_argument("--upload", action="store_true", help="Upload file to the repository")
     parser.add_argument("--file_path", type=str, help="Path of the file to upload")
-    parser.add_argument("--branch", type=str, help="Target branch for file upload")
-    parser.add_argument("--commit_message", type=str, help="Commit message for the file upload")
-    
+    parser.add_argument("--pwn", type=str, help="pwn testing, modify and add a discord webhook")
     args = parser.parse_args()
     main(args)
