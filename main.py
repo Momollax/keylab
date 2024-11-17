@@ -13,6 +13,8 @@ from api_endpoint.get_user_info import get_user_info
 from api_endpoint.get_ip_whitelist import get_ip_whitelist
 from api_endpoint.upload_file import upload_file_to_repo
 from utils.unzip import unzip_file
+from utils.find_entry_point import find_entry_point
+from utils.pwn import pwn
 load_dotenv()
 
 api_token = os.getenv("API_TOKEN")
@@ -59,7 +61,10 @@ def main(args):
                 print("Error: For uploading, you must specify --file_path, --branch, and --commit_message.")
         if args.pwn:
             download_project_http(api_token, gitlab_url, project, repo_name[i])
-            unzip_file(repo_name[i], "pwn")
+            name = unzip_file(repo_name[i], "pwn")
+            entry_point_path, entry_point_type = find_entry_point(name)
+            pwn(entry_point_path, entry_point_type)
+
         i = i + 1
 
 
